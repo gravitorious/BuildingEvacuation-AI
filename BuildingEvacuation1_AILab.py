@@ -9,46 +9,103 @@
 from collections import deque
 
 
-def search_problem(start_state, goal, method):
+def search_problem(start_state, goal, mymethod):
     """
     **starts the problem
     """
-    find_solution(make_front(start_state), make_queue(start_state), [], goal, method)
+    return find_solution(make_front(start_state), make_queue(start_state), [], goal, mymethod)
 
 
-def find_solution(front, queue, closed, goal, method):
+def find_solution(front, queue, closed, goal, mymethod):
     """
     **makes the search tree recursive
     """
+    print(front, queue, closed)
+    if not front:  #  if front list is empty we didn't find a solution
+        return None
+    first_state = front.popleft()  # pop the first state from search frontier
+    first_path = queue.popleft()  #  pop the first path from queue
+    if first_state in closed:  # check if the next state is on closed set
+        final_state = find_solution(front, queue, closed, goal, mymethod)  # if it is, we continue with the next state
+    else:
+        if check_for_goal_state(first_state):  # if first state from search frontier is the goal state, we finish!
+            return first_path  # the result is the path from parent node to goal node
+        else:
+            """add the node we will visit to closed set"""
+            closed.append(first_state)
+
+            """make the new states"""
+            new_states = find_children(first_state)  # get new states
+
+            """remove none objects"""
+            final_states = remove_none_states(new_states)
+
+            """we don't add the none states on search frontier. Also, we don't create new paths"""
+            expand_front(front, final_states)
+
+
+            """
+            so, we are ready to extend the queue
+            """
+            extend_queue(queue, final_states, first_path)
+
+            final_state = find_solution(front, queue, closed, goal, mymethod)
+
+
+    return final_state
+
 
 
 def make_front(state):
     """
     **initialize front
     """
-    front = deque(state)
-    front.insert(0, state)
+    front = deque()
+    front.append(state)
+    return front
 
-def expand_front():
+
+def expand_front(front, new_states):
     """
     ** expanding the front
     """
-    pass
+
+    """
+    if states were only None objects (so node hasn't any child) there is no problem
+    cause we removed them, so we extend an empty list
+    """
+
+    front.extendleft(reversed(new_states.copy()))  # put all new states on start on search frontier
 
 
 def make_queue(state):
     """
     **initialize queue
     """
+
+    """init queue with first state"""
     queue = deque()
-    queue.insert(0, state)
+    """we put the first state on list"""
+    list_for_initstate = [state]
+    """put first state on queue"""
+    queue.append(list_for_initstate)
+    return queue
 
 
-def extend_queue():
+def extend_queue(queue, states, first_path):
     """
     **extending the queue with growpath
     """
-    pass
+
+    """we finish when we don't have other states to add on queue"""
+
+    if not states:
+        return None
+    else:
+        f_path = first_path.copy()
+        first_path.append(states.pop(len(states)-1))
+        queue.appendleft(first_path)
+        extend_queue(queue, states, f_path)
 
 
 def grow_path():
@@ -62,7 +119,7 @@ def find_children(state):
     """
     **returns all new states from one state
     """
-    return_list = [go_to_floor1(state), go_to_floor2(state), go_to_floor3(state)]
+    return_list = [go_to_ground_floor(state), go_to_floor1(state), go_to_floor2(state), go_to_floor3(state)]
     return return_list
 
 
@@ -75,12 +132,12 @@ def go_to_floor1(state):
     new_state = state.copy()
     if controls_for_change_floor(new_state, 1):
         new_state[0] = 1
-        if 5 - new_state[1] >= new_state[3]:
-            take = state[1]
+        if 5 - new_state[1] >= new_state[2]:
+            take = new_state[2]
         else:
             take = 5 - new_state[1]
         new_state[1] += take
-        new_state[3] -= take
+        new_state[2] -= take
         return new_state
     else:
         return None
@@ -90,15 +147,16 @@ def go_to_floor2(state):
     """
     **goes to second floor
     """
+
     new_state = state.copy()
     if controls_for_change_floor(new_state, 2):
         new_state[0] = 2
-        if 5 - new_state[1] >= new_state[4]:
-            take = state[1]
+        if 5 - new_state[1] >= new_state[3]:
+            take = new_state[3]
         else:
             take = 5 - new_state[1]
         new_state[1] += take
-        new_state[4] -= take
+        new_state[3] -= take
         return new_state
     else:
         return None
@@ -111,12 +169,12 @@ def go_to_floor3(state):
     new_state = state.copy()
     if controls_for_change_floor(new_state, 3):
         new_state[0] = 3
-        if 5 - new_state[1] >= new_state[5]:
-            take = state[1]
+        if 5 - new_state[1] >= new_state[4]:
+            take = new_state[4]
         else:
             take = 5 - new_state[1]
         new_state[1] += take
-        new_state[5] -= take
+        new_state[4] -= take
         return new_state
     else:
         return None
@@ -199,6 +257,12 @@ def controls_for_change_floor(state, floor):
     return True
 
 
+def remove_none_states(new_states):
+    """ remove None objects from list """
+    ls = [x for x in new_states if x is not None]
+    return ls
+
+
 # program starts here
 
 if __name__ == '__main__':
@@ -207,15 +271,16 @@ if __name__ == '__main__':
     Structure of state
     (floor of elevator, capacity of elevator, capacity of 1st floor, capacity of 2nd floor, capacity of 3rd floor)
     """
-
     # search algorithm
-    method = 'DFS'
+    mymethod = 'DFS'
 
     # init first state
-    initialState = [0, 0, 4, 6, 2]
+    initialState = [0, 0, 2, 6, 4]
 
     # init goal state
     goalState = [0, 0, 0, 0, 0]
 
-    #searchproblem(initialState, goalState, method)
+    result = search_problem(initialState, goalState, mymethod)
+    if result:
+        print("Yay! We found a solution! The path is:\n", result)
 
