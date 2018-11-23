@@ -10,6 +10,7 @@
 """
 
 from collections import deque
+import sys
 
 
 def search_problem(start_state, goal, mymethod):
@@ -277,17 +278,21 @@ def remove_none_states(new_states):
 
 
 if __name__ == '__main__':
-    def main():
+    def main(args):
         """
         declaration of initial state, final state, and ... begins the program!
         Structure of state
         (floor of elevator, capacity of elevator, capacity of 1st floor, capacity of 2nd floor, capacity of 3rd floor)
         """
-        # search algorithm
-        """
-        if you want other search algorithm, change this variable
-        """
-        my_method = 'DFS'
+
+        if len(args) == 1:
+            """
+            if you run it from IDE and you want other search algorithm, 
+            change this variable
+            """
+            my_method = 'DFS'
+        else:
+            my_method = args[1]
 
         # init first state
         initial_state = [0, 0, 2, 6, 4]
@@ -301,5 +306,6 @@ if __name__ == '__main__':
         else:
             print("Oups... Sorry, there is no solution on this problem")
 
+
 # program starts here
-main()
+main(sys.argv)
