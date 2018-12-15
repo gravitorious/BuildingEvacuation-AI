@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 """
 **  BuildingEvacuation1.AILab.py
 **  BuildingEvacuation-AI
 **
-**  Created by Nikolaos Mavrogeneiadis - 161014 on 17/11/2018.
+**  Created by Nikolaos Mavrogeneiadis - 161014 on 7/12/2018.
 **  University of West Attica
 **  Department of Informatics and Computer Engineering
 **  Artificial Intelligence Lab
@@ -11,13 +12,14 @@
 
 from collections import deque
 import sys
+from math import ceil, floor
 
 
 def search_problem(start_state, goal, mymethod):
     """
     Beginning the search algorithm
     """
-    if mymethod != 'BFS' and mymethod != 'DFS':
+    if mymethod != 'BFS' and mymethod != 'DFS' and mymethod != 'A*':
         print("Sorry... we don't support this search algorithm!")
         return None
     else:
@@ -29,6 +31,7 @@ def find_solution(front, queue, closed, goal, mymethod):
     builds the search tree recursive
     """
 
+    print(front)
     if not front:  #  if front list is empty we didn't find a solution
         return None
     first_state = front.popleft()  # pop the first state from search frontier
@@ -36,7 +39,8 @@ def find_solution(front, queue, closed, goal, mymethod):
     if first_state in closed:  # check if the next state is on closed set
         final_state = find_solution(front, queue, closed, goal, mymethod)  # if it is, we continue with the next state
     else:
-        if check_for_goal_state(first_state):  # if first state from search frontier is the goal state, we finish!
+        if check_for_goal_state(first_state, goal):  # if first state from search frontier is the goal state, we finish!
+            print(len(first_path)-1)
             return first_path  # the result is the path from parent node to goal node (first element of queue)
         else:
             """add the node we will make child nodes on closed set"""
@@ -59,6 +63,10 @@ def find_solution(front, queue, closed, goal, mymethod):
             so, we are ready to extend the queue
             """
             extend_queue(queue, final_states, first_path, mymethod)
+
+
+            if mymethod == 'A*':
+                front, queue = alan_sort(front, queue)
 
             """
             check the next state on search frontier recursively
@@ -90,7 +98,7 @@ def expand_front(front, new_states, mymethod):
     """
     if mymethod == 'DFS':
         front.extendleft(reversed(new_states.copy()))  # put all new states on start on search frontier
-    elif mymethod == 'BFS':
+    elif mymethod == 'BFS' or mymethod == 'A*':
         front.extend(new_states.copy())  # there is no need to reverse
 
 
@@ -130,7 +138,7 @@ def extend_queue(queue, states, first_path, mymethod):
             first_path.append(states.pop())  # pop last state and append it on previous path
             queue.appendleft(first_path)  # append path on left side
             extend_queue(queue, states, f_path, mymethod)  # continue with the next state
-    elif mymethod == 'BFS':
+    elif mymethod == 'BFS' or mymethod == 'A*':
         if not states:
             return None
         else:
@@ -244,13 +252,13 @@ def check_if_floors_are_empty(state):
 
 
 
-def check_for_goal_state(state):
+def check_for_goal_state(state, goal):
     """
     checks if state is the goal state
     If state contains only zeros, it means that state is the goal state
     so we return true
     """
-    if all(s == 0 for s in state):
+    if state == goal:
         return True
     else:
         return False
@@ -277,6 +285,55 @@ def remove_none_states(new_states):
     return ls
 
 
+def alan_sort(front, queue):
+
+        z = list(queue)
+        for i in range(len(z)):
+            z[i].insert(0, front[i])
+
+
+        z.sort(key=lambda x: a_asterisk(x))
+
+        front = list()
+        queue = list()
+
+        for i in range(len(z)):
+            front.append(z[i][0])
+            queue.append(z[i][1:])
+
+        return deque(front), deque(queue)
+
+
+def a_asterisk(mylist):
+
+    g_value = len(mylist)-2
+
+    return g_value + h(mylist[0])
+
+
+
+def h(state):
+
+    el_residents = state[1]
+    residents_on_first = state[2]
+    residents_on_sec = state[3]
+    residents_on_third = state[4]
+
+    #times that the elevator goes to ground floor
+
+    gr_floor = el_residents + residents_on_first + residents_on_sec + residents_on_third;
+    times_grfloor = ceil(gr_floor/5)
+
+    #times are needed to take all the residents from floors
+    times_to_firstfl = ceil(residents_on_first / 5)
+    times_to_secfl = ceil(residents_on_sec / 5)
+    times_to_thirdfl = ceil(residents_on_third / 5)
+
+    h_value = times_grfloor + times_to_firstfl + times_to_secfl + times_to_thirdfl;
+    return h_value
+
+
+
 if __name__ == '__main__':
     def main(args):
         """
@@ -285,17 +342,18 @@ if __name__ == '__main__':
         (floor of elevator, capacity of elevator, capacity of 1st floor, capacity of 2nd floor, capacity of 3rd floor)
         """
 
+
         if len(args) == 1:
             """
             if you run it from IDE and you want other search algorithm, 
             change this variable
             """
-            my_method = 'DFS'
+            my_method = 'A*'
         else:
             my_method = args[1]
 
         # init first state
-        initial_state = [0, 0, 2, 6, 4]
+        initial_state = [0, 0, 16, 12, 19]
 
         # init goal state
         goal_state = [0, 0, 0, 0, 0]
