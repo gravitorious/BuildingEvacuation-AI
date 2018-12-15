@@ -11,8 +11,10 @@
 """
 
 from collections import deque
+from math import ceil
 import sys
-from math import ceil, floor
+
+recursive_cycles = 0
 
 
 def search_problem(start_state, goal, mymethod):
@@ -30,8 +32,12 @@ def find_solution(front, queue, closed, goal, mymethod):
     """
     builds the search tree recursive
     """
+    with open('trace_of_front.txt', 'a') as trace_of_front_file:
+        trace_of_front_file.write(front.__str__() + "\n")
+    with open('trace_of_queue.txt', 'a') as trace_of_queue_file:
+        trace_of_queue_file.write(queue.__str__() + "\n")
+    global recursive_cycles
 
-    print(front)
     if not front:  #  if front list is empty we didn't find a solution
         return None
     first_state = front.popleft()  # pop the first state from search frontier
@@ -40,7 +46,8 @@ def find_solution(front, queue, closed, goal, mymethod):
         final_state = find_solution(front, queue, closed, goal, mymethod)  # if it is, we continue with the next state
     else:
         if check_for_goal_state(first_state, goal):  # if first state from search frontier is the goal state, we finish!
-            print(len(first_path)-1)
+            with open('results.txt', 'a') as results:  #write the number ofrecursive cycles
+                results.write("Συνολικοί αναδρομικοί κύκλοι: " + recursive_cycles.__str__() + "\n")
             return first_path  # the result is the path from parent node to goal node (first element of queue)
         else:
             """add the node we will make child nodes on closed set"""
@@ -71,6 +78,7 @@ def find_solution(front, queue, closed, goal, mymethod):
             """
             check the next state on search frontier recursively
             """
+            recursive_cycles += 1
             final_state = find_solution(front, queue, closed, goal, mymethod)
 
     return final_state
@@ -319,12 +327,12 @@ def h(state):
     residents_on_sec = state[3]
     residents_on_third = state[4]
 
-    #times that the elevator goes to ground floor
-
+    """times that the elevator goes to ground floor"""
     gr_floor = el_residents + residents_on_first + residents_on_sec + residents_on_third;
     times_grfloor = ceil(gr_floor/5)
 
-    #times are needed to take all the residents from floors
+
+    """times are needed to take all the residents from floors"""
     times_to_firstfl = ceil(residents_on_first / 5)
     times_to_secfl = ceil(residents_on_sec / 5)
     times_to_thirdfl = ceil(residents_on_third / 5)
@@ -353,12 +361,17 @@ if __name__ == '__main__':
             my_method = args[1]
 
         # init first state
-        initial_state = [0, 0, 16, 12, 19]
+        initial_state = [0, 0, 2, 6, 4]
 
         # init goal state
         goal_state = [0, 0, 0, 0, 0]
 
         result = search_problem(initial_state, goal_state, my_method)
+        with open('results.txt', 'a') as results:  # write the number ofrecursive cycles
+            results.write("Αρχική Κατάσταση: " + initial_state.__str__() + "\n")
+            results.write("Τελική Κατάσταση: " + goal_state.__str__() + "\n")
+            results.write("Μέγεθος τελικού path: " + (len(result)-1).__str__() + "\n")
+            results.write("Τελικό path: " + result.__str__() + "\n")
         if result:
             print("Yay! We found a solution! With method:", my_method, "! The path is:\n", result)
         else:
@@ -366,4 +379,10 @@ if __name__ == '__main__':
 
 
 # program starts here
+with open('trace_of_front.txt', 'w') as trace_of_front_file:
+    pass
+with open('trace_of_queue.txt', 'w') as trace_of_queue_file:
+    pass
+with open('results.txt', 'w') as results:
+    pass
 main(sys.argv)
