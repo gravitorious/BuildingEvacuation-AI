@@ -32,6 +32,8 @@ def find_solution(front, queue, closed, goal, mymethod):
     """
     builds the search tree recursive
     """
+
+
     with open('trace_of_front.txt', 'a') as trace_of_front_file:
         trace_of_front_file.write(front.__str__() + "\n")
     with open('trace_of_queue.txt', 'a') as trace_of_queue_file:
@@ -50,13 +52,13 @@ def find_solution(front, queue, closed, goal, mymethod):
                 results.write("Συνολικοί αναδρομικοί κύκλοι: " + recursive_cycles.__str__() + "\n")
             return first_path  # the result is the path from parent node to goal node (first element of queue)
         else:
-            """add the node we will make child nodes on closed set"""
+            # add the node we will make child nodes on closed set
             closed.append(first_state)
 
-            """make the new states"""
+            # make the new states
             new_states = find_children(first_state)  # get new states
 
-            """remove none objects"""
+            # remove none objects
             final_states = remove_none_states(new_states)
 
             """
@@ -66,18 +68,16 @@ def find_solution(front, queue, closed, goal, mymethod):
             expand_front(front, final_states, mymethod)
 
 
-            """
-            so, we are ready to extend the queue
-            """
+
+            # so, we are ready to extend the queue
             extend_queue(queue, final_states, first_path, mymethod)
 
-
+            # if method is A* we need to sort the front and queue by the heuristic value
             if mymethod == 'A*':
                 front, queue = alan_sort(front, queue)
 
-            """
-            check the next state on search frontier recursively
-            """
+
+            # check the next state on search frontier recursively
             recursive_cycles += 1
             final_state = find_solution(front, queue, closed, goal, mymethod)
 
@@ -115,13 +115,13 @@ def make_queue(state):
     initialize queue
     """
 
-    """init queue with first state"""
+    # init queue with first state
     queue = deque()
 
-    """we put the first state on list"""
+    # we put the first state on list
     list_for_initstate = [state]
 
-    """put first state on queue"""
+    # put first state on queue"""
     queue.append(list_for_initstate)
     return queue
 
@@ -295,29 +295,29 @@ def remove_none_states(new_states):
 
 def alan_sort(front, queue):
 
-        z = list(queue)
-        for i in range(len(z)):
-            z[i].insert(0, front[i])
+        z = list(queue)  #add queue on new list
 
-
+        # sort this list by the heuristic value
         z.sort(key=lambda x: a_asterisk(x))
 
+        # clear front and queue
         front = list()
         queue = list()
 
+        # make front and queue again from the sorted list
         for i in range(len(z)):
-            front.append(z[i][0])
-            queue.append(z[i][1:])
+            front.append(z[i][-1])
+            queue.append(z[i])
 
+        # return the sorted front and queue
         return deque(front), deque(queue)
 
 
 def a_asterisk(mylist):
 
-    g_value = len(mylist)-2
+    g_value = len(mylist)-1
 
-    return g_value + h(mylist[0])
-
+    return g_value + h(mylist[-1])
 
 
 def h(state):
@@ -328,7 +328,7 @@ def h(state):
     residents_on_third = state[4]
 
     """times that the elevator goes to ground floor"""
-    gr_floor = el_residents + residents_on_first + residents_on_sec + residents_on_third;
+    gr_floor = el_residents + residents_on_first + residents_on_sec + residents_on_third
     times_grfloor = ceil(gr_floor/5)
 
 
@@ -337,9 +337,8 @@ def h(state):
     times_to_secfl = ceil(residents_on_sec / 5)
     times_to_thirdfl = ceil(residents_on_third / 5)
 
-    h_value = times_grfloor + times_to_firstfl + times_to_secfl + times_to_thirdfl;
+    h_value = times_grfloor + times_to_firstfl + times_to_secfl + times_to_thirdfl
     return h_value
-
 
 
 if __name__ == '__main__':
@@ -349,7 +348,6 @@ if __name__ == '__main__':
         Structure of state
         (floor of elevator, capacity of elevator, capacity of 1st floor, capacity of 2nd floor, capacity of 3rd floor)
         """
-
 
         if len(args) == 1:
             """
@@ -367,22 +365,31 @@ if __name__ == '__main__':
         goal_state = [0, 0, 0, 0, 0]
 
         result = search_problem(initial_state, goal_state, my_method)
-        with open('results.txt', 'a') as results:  # write the number ofrecursive cycles
-            results.write("Αρχική Κατάσταση: " + initial_state.__str__() + "\n")
-            results.write("Τελική Κατάσταση: " + goal_state.__str__() + "\n")
-            results.write("Μέγεθος τελικού path: " + (len(result)-1).__str__() + "\n")
-            results.write("Τελικό path: " + result.__str__() + "\n")
+
         if result:
             print("Yay! We found a solution! With method:", my_method, "! The path is:\n", result)
+            print("Check Results on results.txt and trace on trace_of_front.txt & trace_of_queue.txt")
+            with open('results.txt', 'a') as results:  # write the number ofrecursive cycles
+                results.write("Αλγόριθμος: " + my_method.__str__() + "\n")
+                results.write("Αρχική Κατάσταση: " + initial_state.__str__() + "\n")
+                results.write("Τελική Κατάσταση: " + goal_state.__str__() + "\n")
+                results.write("Μέγεθος τελικού path: " + (len(result) - 1).__str__() + "\n")
+                results.write("Τελικό path: " + result.__str__() + "\n")
         else:
-            print("Oups... Sorry, there is no solution on this problem")
+            print("Oups... Sorry, there is no solution to this problem")
 
 
-# program starts here
+""" 
+program starts here
+"""
+
+# create files
 with open('trace_of_front.txt', 'w') as trace_of_front_file:
     pass
 with open('trace_of_queue.txt', 'w') as trace_of_queue_file:
     pass
 with open('results.txt', 'w') as results:
     pass
+
+# call main method
 main(sys.argv)
